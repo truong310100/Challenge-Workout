@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { AiOutlineProfile } from "react-icons/ai";
 import { FiHome } from "react-icons/fi";
 import { LuDelete } from "react-icons/lu";
@@ -15,7 +15,9 @@ export default function Challenge() {
     const [formData, setFormData] = useState([]);
     const [sliceFirst, setSliceFirst] = useState(0);
     const [sliceEnd, setSliceEnd] = useState(1);
-    const [completedReps, setComplatedReps] = useState([])
+    const [completedSets1, setCompletedSets1] = useState([])
+    const [completedSets2, setCompletedSets2] = useState([])
+    const [percentSets, setPercentSets] = useState([])
 
     const handleAddInput = () => {
         setFormInputs([...formInputs, { name: '', sets: '', reps: '', restTime: '' }]);
@@ -34,19 +36,33 @@ export default function Challenge() {
         setFormInputs(updatedInputs);
     };
     
+    const handlePercenSets = () => {
+        const totalSets1 = formInputs.reduce((total, currentItem) => {
+            return total + parseInt(currentItem.sets);
+        }, 0);
+        setCompletedSets1(totalSets1)
+        console.log('com1',totalSets1)
+
+        const totalSets2 = formInputs
+
+        setCompletedSets2(totalSets2)
+        const perSets = (completedSets2/completedSets1)*100
+        setPercentSets(perSets)
+        console.log('com2',totalSets2)
+        console.log('per',perSets)
+
+    }
+
     const handleSubmit = () => {
         console.log(formInputs);
         setFormData(formInputs);
-        const totalSets = formInputs.reduce((total, currentItem) => {
-            return total + parseInt(currentItem.sets);
-        }, 0);
-        console.log("Tổng sets:", totalSets);
-        setComplatedReps(totalSets)
+        handlePercenSets();
     }
     
     const handleDone = () => {
         setSliceFirst(sliceFirst+1);
         setSliceEnd(sliceEnd+1);
+        handlePercenSets();
     }
 
     const handleMenuBar = (id) => {
@@ -119,8 +135,8 @@ export default function Challenge() {
                         </div>
                     </div>    
                     ))}
-                <div className='flex justify-end w-full bg-black text-white'>
-                    <p className='mx-1'>{completedReps}</p>
+                <div className='flex justify-end bg-black text-white w-[100%]'>
+                    <p className='mx-1'>{percentSets}</p>
                 </div>
                 <div className='flex my-2'>
                     <button className='w-full flex justify-center p-2 hover:bg-gray-300'><IoStopOutline/></button>
