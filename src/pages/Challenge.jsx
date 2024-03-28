@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react';
 import { AiOutlineProfile } from "react-icons/ai";
 import { FiHome } from "react-icons/fi";
 import { LuDelete } from "react-icons/lu";
@@ -11,13 +11,17 @@ export default function Challenge() {
     const [home,setHome] = useState(true);
     const [music,setMusic] = useState(false);
     const [profile,setProfile] = useState(false);
+
     const [formInputs, setFormInputs] = useState([{name: '', sets: '', reps: '', restTime: ''}]);
     const [formData, setFormData] = useState([]);
     const [sliceFirst, setSliceFirst] = useState(0);
     const [sliceEnd, setSliceEnd] = useState(1);
-    const [completedSets1, setCompletedSets1] = useState([])
-    const [completedSets2, setCompletedSets2] = useState([])
-    const [percentSets, setPercentSets] = useState([])
+    const [totalSets, setTotalSets] = useState(0);
+    const totalSetsRef = useRef(totalSets);
+    const [totalSets2, setTotalSets2] = useState();
+    const [percentSets, setPercentSets] = useState();
+    const [restTime, setRestTime] = useState(0);
+    const [restTimerRunning, setRestTimerRunning] = useState(false);
 
     const handleAddInput = () => {
         setFormInputs([...formInputs, { name: '', sets: '', reps: '', restTime: '' }]);
@@ -35,35 +39,71 @@ export default function Challenge() {
         updatedInputs[index][name] = value;
         setFormInputs(updatedInputs);
     };
-    
-    const handlePercenSets = () => {
-        const totalSets1 = formInputs.reduce((total, currentItem) => {
-            return total + parseInt(currentItem.sets);
-        }, 0);
-        setCompletedSets1(totalSets1)
-        console.log('com1',totalSets1)
-
-        const totalSets2 = formInputs
-
-        setCompletedSets2(totalSets2)
-        const perSets = (completedSets2/completedSets1)*100
-        setPercentSets(perSets)
-        console.log('com2',totalSets2)
-        console.log('per',perSets)
-
-    }
 
     const handleSubmit = () => {
         console.log(formInputs);
         setFormData(formInputs);
-        handlePercenSets();
+        const newTotalSets = formInputs.reduce((total, currentItem) => {
+            return total + parseInt(currentItem.sets);
+        }, 0);
+        setTotalSets(newTotalSets);
+        setTotalSets2(parseInt(formInputs[sliceFirst].sets));
+
+
     }
     
+    useEffect(() => {
+        if (restTimerRunning && restTime > 0) {
+            const timer = setInterval(() => {
+                setRestTime(prevRestTime => prevRestTime - 1);
+            }, 1000);
+
+            return () => clearInterval(timer);
+        }
+    }, [restTimerRunning, restTime]);
+
     const handleDone = () => {
-        setSliceFirst(sliceFirst+1);
-        setSliceEnd(sliceEnd+1);
-        handlePercenSets();
-    }
+        if (sliceFirst < formInputs.length) {
+            const completedSets = parseInt(formInputs[sliceFirst].sets);
+            setTotalSets2(prevCount => prevCount + completedSets); //////Lỗi ở đây
+
+            const newPercent = (totalSets2 / totalSets) * 100;
+            setPercentSets(newPercent);
+
+            console.log('Số sets',completedSets)
+            console.log('Tổng set 1',totalSets)
+            console.log('Tổng set 2',totalSets2)
+            console.log('tổng hiện tại',newPercent,"%")
+            console.log('_________________________________')
+
+
+            // Lưu thời gian nghỉ ngơi khi bắt đầu
+            setRestTime(parseInt(formInputs[sliceFirst].restTime));
+            setRestTimerRunning(true);
+        } else {
+            const done = "Bạn đã hoàn thành 100"
+            setPercentSets(done)
+        }
+
+        setSliceFirst(sliceFirst + 1);
+        setSliceEnd(sliceEnd + 1);
+    };
+
+    const handleStop = () => {
+        // setFormInputs([{ name: '', sets: '', reps: '', restTime: '' }]);
+        // setFormData([]);
+        // setSliceFirst(0);
+        // setSliceEnd(1);
+        // setTotalSets(0);
+        // totalSetsRef.current = 0;
+        // setTotalSets2(0);
+        // setPercentSets(100);
+        // setRestTime(0);
+        // setRestTimerRunning(false);
+    
+        console.log('Stop');
+    };
+    
 
     const handleMenuBar = (id) => {
         if(id === 'idMusic'){
@@ -101,13 +141,13 @@ export default function Challenge() {
                                 <input type="text" value={input.name} onChange={(e) => handleInputChange(index, e)} name="name" placeholder='Tên bài tập' className='w-full outline-none'/>
                             </td>
                             <td className='text-center'>
-                                <input type="tel" value={input.sets} onChange={(e) => handleInputChange(index, e)} name="sets" placeholder='sets' min="1" max="1000" className='w-full text-center outline-none'/>
+                                <input type="number" value={input.sets} onChange={(e) => handleInputChange(index, e)} name="sets" placeholder='sets' min="1" max="1000" className='w-full text-center outline-none'/>
                             </td>
                             <td className='text-center'>
-                                <input type="tel" value={input.reps} onChange={(e) => handleInputChange(index, e)} name="reps" placeholder='reps' min="1" max="1000" className='w-full text-center outline-none'/>
+                                <input type="number" value={input.reps} onChange={(e) => handleInputChange(index, e)} name="reps" placeholder='reps' min="1" max="1000" className='w-full text-center outline-none'/>
                             </td>
                             <td className='text-center'>
-                                <input type="tel" value={input.restTime} onChange={(e) => handleInputChange(index, e)} name="restTime" placeholder='sec' min="1" max="1000" className='w-full text-center outline-none'/>
+                                <input type="number" value={input.restTime} onChange={(e) => handleInputChange(index, e)} name="restTime" placeholder='sec' min="1" max="1000" className='w-full text-center outline-none'/>
                             </td>
                             <td className='flex justify-center text-2xl h-16'>
                                 <button onClick={() => handleDeleteInput(index)} className='hover:text-gray-500'>
@@ -131,15 +171,15 @@ export default function Challenge() {
                             <p className='font-bold text-lg max-md:hidden'>{item.name}</p>
                             <p>{item.sets} sets</p>
                             <p>{item.reps} reps</p>
-                            <p>{item.restTime}s</p>
+                            <p>{restTime}s</p>
                         </div>
                     </div>    
                     ))}
-                <div className='flex justify-end bg-black text-white w-[100%]'>
-                    <p className='mx-1'>{percentSets}</p>
+                <div style={{backgroundColor:"black",width: `${percentSets}%` }}>
+                    <p className='mx-1 text-end text-white'>{percentSets}%</p>
                 </div>
                 <div className='flex my-2'>
-                    <button className='w-full flex justify-center p-2 hover:bg-gray-300'><IoStopOutline/></button>
+                    <button onClick={handleStop} className='w-full flex justify-center p-2 hover:bg-gray-300'><IoStopOutline/></button>
                     <button className='w-full flex justify-center p-2 hover:bg-gray-300'><IoPauseOutline/></button>
                     <button onClick={handleDone} className='w-full flex justify-center p-2 hover:bg-gray-300'><MdDone/></button>
                 </div>
